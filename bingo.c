@@ -13,33 +13,10 @@ typedef struct tupla{
 	struct tupla * sig;
 }TUPLA;
 
-typedef struct lista_tuplas{
-	TUPLA* primero;
-	TUPLA* ultimo;
-}LISTA_TUPLAS;
-
-LISTA_TUPLAS* crearListaTuplas(){
-	LISTA_TUPLAS * nueva_lista_tuplas = (LISTA_TUPLAS*)malloc(sizeof(LISTA_TUPLAS));
-	nueva_lista_tuplas->primero =NULL;
-	nueva_lista_tuplas->ultimo =NULL;
-	return nueva_lista_tuplas;
-}
 
 int empty(TUPLA* tupla){
 	if(tupla!=NULL){
 		if(tupla->primero==NULL && tupla->ultimo==NULL){
-			return 1;
-		}else{
-			return 0;
-		}
-	}else{
-		return 0;
-	}
-}
-
-int empty_LP(LISTA_TUPLAS* lp){
-	if(lp!=NULL){
-		if(lp->primero==NULL && lp->ultimo==NULL){
 			return 1;
 		}else{
 			return 0;
@@ -77,89 +54,22 @@ void verTupla(TUPLA* tupla){
 	}
 }
 
-LISTA_TUPLAS* eliminar_inicio_LP(LISTA_TUPLAS* lp){
-	if(lp!=NULL){
-		if(empty_LP(lp)){
-			return NULL;
-		}else{
-			TUPLA* aux = lp->primero;
-			if(aux->sig == NULL){
-				lp->primero=NULL;
-				lp->ultimo=NULL;
-				free(aux);
-				return lp;
-			}else{
-				lp->primero = aux->sig;
-				free(aux);
-				return lp;
-			}
-		}
-	}else{
-		return NULL;
-	}
-	return NULL;
-}
-
-LISTA_TUPLAS* eliminar_final_LP(LISTA_TUPLAS * lp){
-	if(lp!=NULL){
-		if(empty_LP(lp)){
-			return NULL;
-		}else{
-			TUPLA* aux = lp->primero;
-			if(aux->sig == NULL){
-				lp->primero=NULL;
-				lp->ultimo=NULL;
-				free(aux);
-				return lp;
-			}else{
-				while(aux->sig!=lp->ultimo){
-					aux =aux->sig;
+void imprimirTupla(FILE* file, TUPLA* tupla){
+	if(tupla !=NULL && file !=NULL){
+		if(!empty(tupla)){
+			NODO* aux = tupla->primero;
+			fprintf(file,"[");
+			while(aux!=NULL){
+				if(aux->sig == NULL){
+					fprintf(file,"%d]", aux->dato);
+				}else{
+					fprintf(file,"%d ", aux->dato);
 				}
-				aux->sig=NULL;
-				free(lp->ultimo);
-				lp->ultimo = aux;
-				return lp;
+				aux=aux->sig;
 			}
+			fprintf(file,"\n");
 		}
-	}else{
-		return NULL;
 	}
-	return NULL;
-}
-
-LISTA_TUPLAS* insertar_final_LP(LISTA_TUPLAS * lp, TUPLA * nuevo){
-	if(lp!=NULL){
-		TUPLA* aux = lp->ultimo;
-		if(aux==NULL){
-			lp->ultimo = nuevo;
-			lp->primero = nuevo;
-			return lp;
-		}else{
-			lp->ultimo->sig=nuevo;
-			lp->ultimo = nuevo;
-			return lp;
-		}
-	}else{
-		return NULL;
-	}
-	return NULL;
-}
-
-LISTA_TUPLAS* insertar_inicio_LP(LISTA_TUPLAS* lp, TUPLA * nuevo){
-	if(lp!=NULL){
-		TUPLA* aux = lp->primero;
-		if(aux==NULL){
-			lp->primero = nuevo;
-			lp->ultimo = nuevo;
-		}else{
-			nuevo->sig= aux;
-			lp->primero = nuevo;
-		}
-		return lp;
-	}else{
-		return NULL;
-	}
-	return NULL;
 }
 
 TUPLA* eliminar_inicio(TUPLA* tupla){
@@ -249,97 +159,68 @@ TUPLA* insertar_inicio(TUPLA* tupla, int x){
 	return NULL;
 }
 
-void verListaTuplas(LISTA_TUPLAS* lp){
-	if(lp !=NULL){
-		if(!empty_LP(lp)){
-			TUPLA* aux = lp->primero;
-			NODO* aux2 = NULL;
-			while(aux!=NULL){
-				aux2 = aux->primero;
-				while(aux2!=NULL){
-					printf(" %d ", aux2->dato);
-					aux2 = aux2->sig;
-				}
-				printf("\n");
-				aux=aux->sig;
-			}
-		}
-	}
-}
 
-int * lectura(char * ruta, int *n){
+void lectura(char * ruta,int *n){
 	FILE* file=NULL;
-	int * resultado  = NULL;
 	int i;
 	if(ruta!=NULL){
 		file = fopen(ruta,"r");
 		fscanf(file,"%d",n);
-		resultado = (int*)malloc((*n)*sizeof(int));
-		for (i = 0; i < (*n); i++)
-		{
-			resultado[i] = i+1;
-		}
 	}
 	fclose(file);
-	return resultado;
+}
+
+void backtracking_bingo(int n, int valor_paso, int indice, TUPLA * tupla,int * conjunto,  FILE * file){	
+	if(valor_paso == 0)	{ //Caso base recursion
+		imprimirTupla(file,tupla);
+		return; 
+		//sin este return sería fuerza bruta 
+		//porque igual consideraria el siguiente elemento despues de los 8
+	}
+
+	int i;
+	for(i = indice; i<n; i++){
+		tupla = insertar_final(tupla, conjunto[i]);
+		backtracking_bingo(n,(valor_paso-1),(i+1),tupla,conjunto,file);
+		tupla = eliminar_final(tupla);
+
+	}
+	return;
+	
 }
 
 void entradaAlgoritmo(int * n){
-	int conjunto[(*n)]; 
-	int i;
+	int * conjunto = (int*)malloc((*n)*sizeof(int)); 
+	int i,j;
 	for(i=0; i<(*n); i++){
 		conjunto[i] = i+1;
 	}
-}
-
-
-void backtracking_bingo(int valor_paso,int * n, int indice, int * conjunto, TUPLA * tupla, LISTA_TUPLAS * resultados){
-	
-	if(valor_paso == 0)	{ //Caso base recursion
-		resultados= insertar_final_LP(resultados,tupla);
-		return;
+	FILE * file = fopen("SALIDA.txt","w");
+	for(j=(*n);j<=20;j++){
+		conjunto[(*n)-1] = j;
+		fprintf(file,"Conjunto:\n[");
+		for(i=0;i<(*n);i++){
+			if(i+1==(*n)){
+				fprintf(file,"%d]", conjunto[i]);
+			}else{
+				fprintf(file,"%d ", conjunto[i]);
+			}
+		}
+		fprintf(file, "\nSubconjuntos:\n");
+		TUPLA * tupla = crearTupla();
+		backtracking_bingo((*n),8,0,tupla,conjunto,file);//llamado a la recursion
 	}
-
-	int i;
-	for(i = indice; i<(*n); i++){
-		tupla = insertar_final(tupla, conjunto[i]);
-		backtracking_bingo(valor_paso-1,n,i+1,conjunto,tupla,resultados);
-		tupla = eliminar_final(tupla);
-	}
-
-	return;
+	fclose(file);
 }
-
-
 
 int main(int argc, char * argv[]){
 	if(argc<2 || argc>2){
-		printf("Ingresa la wea bien\n");
+		printf("Ingrese la cantidad de argumentos necesarios\n");
 	}else{
-		int i,n;
-		int * conjunto; 
-		conjunto = lectura(argv[1],&n);
-		/*
-		for (i = 0; i < n; i++)
-		{
-			printf("%d\n",conjunto[i]);
-		}
-		*/
-//		entradaAlgoritmo(conjunto,&n);
-		TUPLA *t1 = crearTupla();
-		t1 = insertar_inicio(t1,4);
-		t1 = insertar_inicio(t1,1);
-		t1 = insertar_inicio(t1,2);
-		t1 = insertar_inicio(t1,3);
-		TUPLA *t2 = crearTupla();
-		t2 = insertar_inicio(t2,100);
-		t2 = insertar_inicio(t2,29);
-		t2 = insertar_inicio(t2,7);
-		t2 = insertar_inicio(t2,1);
-		LISTA_TUPLAS * all = crearListaTuplas();
-		all = insertar_inicio_LP(all,t1);
-		all = insertar_inicio_LP(all,t2);
-		verListaTuplas(all);
+		int n;
+		lectura(argv[1],&n);
+		entradaAlgoritmo(&n);
+		printf("Revise el archivo SALIDA.txt\n");
 	}
 	
 }
