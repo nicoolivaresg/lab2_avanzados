@@ -170,7 +170,9 @@ void lectura(char * ruta,int *n){
 	fclose(file);
 }
 
+
 void backtracking_bingo(int n, int valor_paso, int indice, TUPLA * tupla,int * conjunto,  FILE * file){	
+	verTupla(tupla);
 	if(valor_paso == 0)	{ //Caso base recursion
 		imprimirTupla(file,tupla);
 		return; 

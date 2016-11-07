@@ -1,0 +1,7 @@
+Ejecutar en consola Linux:
+
+make -f MakeFile
+
+Ejecutar en consola Windows:
+
+gcc bingo.c -o bingo
